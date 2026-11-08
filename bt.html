@@ -1,0 +1,28 @@
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Cinta</title>
+<style>body{font-family:system-ui;margin:0;padding:20px;background:#0e1a1e;color:#e6eef0}#b{font-size:96px;font-weight:700}button{width:100%;padding:16px;font-size:18px;font-weight:700;border-radius:10px;border:0;background:#5cc3d6;color:#062329;margin-top:12px}pre{font-size:12px;color:#93a8af;white-space:pre-wrap}</style></head><body>
+<h2>Cinta ao vivo</h2><div id="s">Desconectado</div><div id="b">--</div><div>RR: <span id="r">--</span> ms · mín <span id="mn">--</span> · máx <span id="mx">--</span></div>
+<button id="c">Conectar cinta</button><pre id="l"></pre>
+<script>
+(function(){
+var L=document.getElementById("l");function lg(t){L.textContent+=t+"\n"}
+window.onerror=function(m){lg("ERRO: "+m)};
+lg("pronto");
+var mn=null,mx=null;
+function onv(e){var v=e.target.value,f=v.getUint8(0),i=1,h;
+ if(f&1){h=v.getUint16(1,true);i=3}else{h=v.getUint8(1);i=2}
+ if(f&8)i+=2;
+ if(f&16&&i+1<v.byteLength){document.getElementById("r").textContent=Math.round(v.getUint16(v.byteLength-2,true)/1024*1000)}
+ document.getElementById("b").textContent=h;
+ mn=mn===null?h:Math.min(mn,h);mx=mx===null?h:Math.max(mx,h);
+ document.getElementById("mn").textContent=mn;document.getElementById("mx").textContent=mx}
+document.getElementById("c").addEventListener("click",function(){
+ lg("toque");
+ navigator.bluetooth.requestDevice({filters:[{services:["heart_rate"]}]})
+ .then(function(d){lg("escolhido: "+d.name);d.addEventListener("gattserverdisconnected",function(){lg("desconectou");document.getElementById("s").textContent="Desconectado"});return d.gatt.connect()})
+ .then(function(s){lg("conectado");return s.getPrimaryService("heart_rate")})
+ .then(function(s){return s.getCharacteristic("heart_rate_measurement")})
+ .then(function(c){c.addEventListener("characteristicvaluechanged",onv);return c.startNotifications()})
+ .then(function(){lg("ao vivo");document.getElementById("s").textContent="Conectado"})
+ .catch(function(e){lg("ERRO: "+(e&&e.message||e))})});
+})();
+</script></body></html>
